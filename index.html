@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebRTC Demo</title>
+  <!-- Importar Bootstrap CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+
+</head>
+
+<body>
+  <div class="container">
+    <h2 class="mt-5">Start/Watch stream video</h2>
+    <div class="videos">
+      <span>
+        <h3>Stream</h3>
+        <video id="webcamVideo" autoplay playsinline></video>
+      </span>
+
+    </div>
+
+    <button id="webcamButton" class="btn btn-primary mt-4">Start webcam</button>
+    <br>
+   
+    
+    <h2 class="mt-5">2. Create a new Streaming</h2>
+    <div class="input-group mb-3">
+      <input id="streamInput" type="text" class="form-control" placeholder="Start stream with code" aria-label="Call code" aria-describedby="answerButton" />
+      <button id="streamButton" class="btn btn-primary" disabled>Start</button>
+    </div>
+
+    <h2 class="mt-5">3. Join a Call</h2>
+    <p>Answer the call from a different browser window or device</p>
+
+    <div class="input-group mb-3">
+      <input id="callInput" type="text" class="form-control" placeholder="Enter stream code" aria-label="Call code" aria-describedby="answerButton" />
+      <button id="answerButton" class="btn btn-primary" disabled>Join</button>
+    </div>
+
+    <h2 class="mt-5">4. Hangup</h2>
+    <button id="hangupButton" class="btn btn-danger" disabled>Hangup</button>
+  </div>
+
+  <!-- Importar Bootstrap JS y el archivo JavaScript personalizado -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+  <script type="module" src="/main.js"></script>
+</body>
+
+</html>
