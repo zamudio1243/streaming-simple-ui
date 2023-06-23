@@ -2,6 +2,7 @@
   "name": "streming-demo",
   "version": "0.1.0",
   "scripts": {
+    "start": "vite",
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview"
