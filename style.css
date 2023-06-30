@@ -31,6 +31,7 @@ video {
   padding: 0;
   display: flex;
   flex-direction: column;
+  flex-grow: 1;
 }
 
 #message-list li {
@@ -44,9 +45,7 @@ video {
   font-family: Arial, sans-serif;
 }
 
-#message-list li:nth-child(even) {
-  background-color: #e6e6e6;
-}
+
 
 #message-list li::before {
   content: "";
@@ -61,9 +60,12 @@ video {
   transform: translateY(100%);
 }
 
-#message-list li:nth-child(even)::before {
-  border-color: #e6e6e6 transparent transparent transparent;
+.live-chat-container {
+  display: flex;
+  flex-direction: column;
+  
 }
+
 
 #message-input {
   margin-top: 10px;

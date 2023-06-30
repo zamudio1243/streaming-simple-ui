@@ -19,21 +19,26 @@
       <div class="video-container">
         <span>
           <h3>Stream</h3>
+
           <video id="webcamVideo" autoplay playsinline></video>
         </span>
         <div class="live-chat-container">
           <h3>Live chat</h3>
+          <div>
+            <h6>Users connected:</h6>
+            <p id="users"></p>
+          </div>
           <ul id="message-list">
-            <li>Bienvenido!</li>
-            <li>Hola a todos</li>
-            <li>¿Cómo están?</li>
+            <li>Welcome!</li>
+            <li>Hi everyone</li>
+            <li>How are u?</li>
           </ul>
           <div class="input-group mb-3">
             <input
               id="callInput"
               type="text"
               class="form-control"
-              placeholder="Send message to stream"
+              placeholder="Message"
               aria-label="Call code"
               aria-describedby="answerButton"
             />
@@ -52,14 +57,14 @@
       <h2 class="mt-5">2. Create a new Streaming</h2>
       <div class="input-group mb-3">
         <input
-          id="streamInput"
+          id="stream-id-input"
           type="text"
           class="form-control"
           placeholder="Start stream with code"
           aria-label="Call code"
           aria-describedby="answerButton"
         />
-        <button id="streamButton" class="btn btn-primary" disabled>
+        <button id="streamButton" class="btn btn-primary" onclick="onStart()">
           Start
         </button>
       </div>
@@ -81,9 +86,6 @@
       <h2 class="mt-5">4. Leave Stream</h2>
       <button id="hangupButton" class="btn btn-danger" disabled>Leave</button>
     </div>
-
-    <!-- Importar Bootstrap JS y el archivo JavaScript personalizado -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="/main.js"></script>
+    <script type="module" src="/main.ts"></script>
   </body>
 </html>
