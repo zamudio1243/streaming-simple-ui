@@ -1,52 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebRTC Demo</title>
+    <!-- Importar Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css"
+    />
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WebRTC Demo</title>
-  <!-- Importar Bootstrap CSS -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+  <body>
+    <div class="container">
+      <h2 class="mt-5">1. Start/Watch stream video</h2>
+      <br />
+      <div class="video-container">
+        <span>
+          <h3>Stream</h3>
+          <video id="webcamVideo" autoplay playsinline></video>
+        </span>
+        <div class="live-chat-container">
+          <h3>Live chat</h3>
+          <ul id="message-list">
+            <li>Bienvenido!</li>
+            <li>Hola a todos</li>
+            <li>¿Cómo están?</li>
+          </ul>
+          <div class="input-group mb-3">
+            <input
+              id="callInput"
+              type="text"
+              class="form-control"
+              placeholder="Send message to stream"
+              aria-label="Call code"
+              aria-describedby="answerButton"
+            />
+            <button id="sendButton" class="btn btn-primary" disabled>
+              Send
+            </button>
+          </div>
+        </div>
+      </div>
 
-</head>
+      <button id="webcamButton" class="btn btn-primary mt-4">
+        Start webcam
+      </button>
+      <br />
 
-<body>
-  <div class="container">
-    <h2 class="mt-5">1. Start/Watch stream video</h2>
-    <div class="videos">
-      <span>
-        <h3>Stream</h3>
-        <video id="webcamVideo" autoplay playsinline></video>
-      </span>
+      <h2 class="mt-5">2. Create a new Streaming</h2>
+      <div class="input-group mb-3">
+        <input
+          id="streamInput"
+          type="text"
+          class="form-control"
+          placeholder="Start stream with code"
+          aria-label="Call code"
+          aria-describedby="answerButton"
+        />
+        <button id="streamButton" class="btn btn-primary" disabled>
+          Start
+        </button>
+      </div>
 
+      <h2 class="mt-5">3. Join to Stream</h2>
+
+      <div class="input-group mb-3">
+        <input
+          id="callInput"
+          type="text"
+          class="form-control"
+          placeholder="Enter stream code"
+          aria-label="Call code"
+          aria-describedby="answerButton"
+        />
+        <button id="answerButton" class="btn btn-primary" disabled>Join</button>
+      </div>
+
+      <h2 class="mt-5">4. Leave Stream</h2>
+      <button id="hangupButton" class="btn btn-danger" disabled>Leave</button>
     </div>
 
-    <button id="webcamButton" class="btn btn-primary mt-4">Start webcam</button>
-    <br>
-   
-    
-    <h2 class="mt-5">2. Create a new Streaming</h2>
-    <div class="input-group mb-3">
-      <input id="streamInput" type="text" class="form-control" placeholder="Start stream with code" aria-label="Call code" aria-describedby="answerButton" />
-      <button id="streamButton" class="btn btn-primary" disabled>Start</button>
-    </div>
-
-    <h2 class="mt-5">3. Join to Stream</h2>
-
-
-    <div class="input-group mb-3">
-      <input id="callInput" type="text" class="form-control" placeholder="Enter stream code" aria-label="Call code" aria-describedby="answerButton" />
-      <button id="answerButton" class="btn btn-primary" disabled>Join</button>
-    </div>
-
-    <h2 class="mt-5">4. Leave Stream</h2>
-    <button id="hangupButton" class="btn btn-danger" disabled>Leave</button>
-  </div>
-
-  <!-- Importar Bootstrap JS y el archivo JavaScript personalizado -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-  <script type="module" src="/main.js"></script>
-</body>
-
+    <!-- Importar Bootstrap JS y el archivo JavaScript personalizado -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="/main.js"></script>
+  </body>
 </html>
