@@ -1,7 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap");
 
 body {
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
@@ -23,8 +23,6 @@ video {
   justify-content: space-between;
 }
 
-
-
 /* Estilos para los mensajes en el chat */
 #message-list {
   list-style: none;
@@ -40,12 +38,12 @@ video {
   max-width: 80%; /* Ajusta el ancho máximo según tus necesidades */
   background-color: #f2f2f2;
   border-radius: 15px;
-  padding: 10px;
+  padding: 4px 10px; /* Cambio en el padding para ajustar el alto */
   margin-bottom: 10px;
   font-family: Arial, sans-serif;
+  box-sizing: border-box; /* Añadido para que el padding se incluya en el ancho y alto total */
+  text-align: left;
 }
-
-
 
 #message-list li::before {
   content: "";
@@ -63,9 +61,7 @@ video {
 .live-chat-container {
   display: flex;
   flex-direction: column;
-  
 }
-
 
 #message-input {
   margin-top: 10px;

@@ -28,21 +28,17 @@
             <h6>Users connected:</h6>
             <p id="users"></p>
           </div>
-          <ul id="message-list">
-            <li>Welcome!</li>
-            <li>Hi everyone</li>
-            <li>How are u?</li>
-          </ul>
+          <ul id="message-list"></ul>
           <div class="input-group mb-3">
             <input
-              id="callInput"
+              id="message-input"
               type="text"
               class="form-control"
               placeholder="Message"
               aria-label="Call code"
               aria-describedby="answerButton"
             />
-            <button id="sendButton" class="btn btn-primary" disabled>
+            <button id="message-buttom" class="btn btn-primary" >
               Send
             </button>
           </div>
@@ -64,9 +60,7 @@
           aria-label="Call code"
           aria-describedby="answerButton"
         />
-        <button id="streamButton" class="btn btn-primary" onclick="onStart()">
-          Start
-        </button>
+        <button id="stream-start-buttom" class="btn btn-primary">Start</button>
       </div>
 
       <h2 class="mt-5">3. Join to Stream</h2>

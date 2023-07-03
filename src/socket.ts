@@ -3,12 +3,13 @@ import io from "socket.io-client";
 const endpoint =
   import.meta.env.VITE_SOCKET_ENDPOINT || "http://localhost:3000";
 
-const stream_endpoint = `${endpoint}/stream `;
+const namespace = `${endpoint}/stream`;
 
-const socket = io(stream_endpoint, {
+const socket = io(namespace, {
   transports: ["websocket"],
   auth: { id: "1234" },
 });
+socket.off;
 
 socket.on("connect", () => {
   console.log("Conexión exitosa con el servidor");
