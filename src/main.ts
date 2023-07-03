@@ -1,24 +1,73 @@
-import './style.css'
-import typescriptLogo from './typescript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.ts'
+import "./style.css";
+import socket from "./socket";
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>Vite + TypeScript</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite and TypeScript logos to learn more
-    </p>
-  </div>
-`
+// Streams
+let localStream: MediaStream | null = null;
+let remoteStream: MediaStream | null = null;
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+// HTML elements
+const webcamButton = document.getElementById(
+  "webcamButton"
+) as HTMLButtonElement;
+const webcamVideo = document.getElementById("webcamVideo") as HTMLVideoElement;
+const callButton = document.getElementById("callButton") as HTMLButtonElement;
+const answerButton = document.getElementById(
+  "answerButton"
+) as HTMLButtonElement;
+const usersCount = document.getElementById("users") as HTMLElement;
+
+// Constants
+const servers: RTCConfiguration = {
+  iceServers: [
+    {
+      urls: ["stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"],
+    },
+  ],
+  iceCandidatePoolSize: 10,
+};
+const peerConnection = new RTCPeerConnection(servers);
+let streamId: string | null = null;
+
+webcamButton.onclick = async () => {
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: true,
+    });
+    webcamVideo.srcObject = localStream;
+    callButton.disabled = false;
+    answerButton.disabled = false;
+    webcamButton.disabled = true;
+  } catch (error) {
+    console.error(error);
+    localStream = null;
+  }
+
+  // Assign streams to corresponding components
+  webcamVideo.srcObject = localStream;
+  callButton.disabled = false;
+  answerButton.disabled = false;
+  webcamButton.disabled = true;
+};
+
+const onStart = () => {
+  streamId = (document.getElementById("stream-id-input") as HTMLInputElement)
+    .value;
+  socket.emit("start", streamId);
+};
+
+socket.on("users", (users: any[]) => {
+  usersCount.textContent = users.length.toString();
+});
+
+answerButton.onclick = async () => {};
+
+const messageList = document.getElementById("message-list") as HTMLUListElement;
+
+const staticMessages = ["Bienvenido!", "Hola a todos", "¿Cómo están?"];
+
+staticMessages.forEach((message) => {
+  const listItem = document.createElement("li");
+  listItem.textContent = message;
+  messageList.appendChild(listItem);
+});
