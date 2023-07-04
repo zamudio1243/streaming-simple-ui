@@ -1,15 +1,14 @@
 import io from "socket.io-client";
+import { v4 as uuidv4 } from 'uuid';
 
 const endpoint =
   import.meta.env.VITE_SOCKET_ENDPOINT || "http://localhost:3000";
-
 const namespace = `${endpoint}/stream`;
 
 const socket = io(namespace, {
   transports: ["websocket"],
-  auth: { id: "1234" },
+  auth: { id: uuidv4() },
 });
-socket.off;
 
 socket.on("connect", () => {
   console.log("Conexión exitosa con el servidor");
