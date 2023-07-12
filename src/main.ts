@@ -148,7 +148,7 @@ startCamButton.onclick = async () => {
   try {
     mediaStream = await navigator.mediaDevices.getUserMedia({
       audio: true,
-      //video: true,
+      video: true,
     });
 
     mediaStream.getTracks().forEach((track) => {
