@@ -51,20 +51,14 @@
       <br />
 
       <h2 class="mt-5">2. Create a new Streaming</h2>
-      <div class="input-group mb-3">
-        <input
-          id="stream-id-input"
-          type="text"
-          class="form-control"
-          placeholder="Start stream with code"
-          aria-label="Call code"
-          aria-describedby="answerButton"
-        />
-        <button id="stream-start-buttom" class="btn btn-primary" disabled>Start</button>
-      </div>
+      <button id="stream-start-buttom" class="btn btn-primary mt-4" disabled>
+        Start
+      </button>
+      <p id="stream-id" class="m-4"></p>
 
       <h2 class="mt-5">3. Join to Stream</h2>
-
+      <h6 class="mt-2">Streams available:</h6>
+      <ul id="streams-list"></ul>
       <div class="input-group mb-3">
         <input
           id="join-stream-input"
@@ -78,7 +72,7 @@
       </div>
 
       <h2 class="mt-5">4. Leave Stream</h2>
-      <button id="hangupButton" class="btn btn-danger" disabled>Leave</button>
+      <button id="leaveButton" class="btn btn-danger" disabled>Leave</button>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
