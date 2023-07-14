@@ -1,20 +1,19 @@
 export enum ClientEvent {
-  USER_JOIN = "user-join",
-  USER_LEAVE = "user-leave",
+  JOIN_STREAM = "join-stream",
+  LEAVE_STREAM = "leave-stream",
+  START_STREAM = "start-stream",
   SEND_OFFER = "send-offer",
   SEND_MESSAGE = "send-message",
   SEND_ICE_CANDIDATE = "send-ice-candidate",
-  RECEIVE_OFFER = "receive-offer",
-  NEW_STREAM = "new-stream",
   SEND_ANSWER = "send-answer",
-  // RECEIVE_ANSWER = "receive-answer",
 }
 
 export enum ServerEvent {
   USERS = "users",
   OFFER = "offer",
-  MESSAGE = "message",
+  ANSWER = "answer",
+  CREATE_OFFER = "create-offer",
   ICE_CANDIDATE = "ice-candidate",
   STREAMS = "streams",
-  ANSWER = "answer",
+  MESSAGE = "message",
 }

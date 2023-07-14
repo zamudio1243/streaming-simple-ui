@@ -34,12 +34,58 @@ const servers: RTCConfiguration = {
 };
 
 // webRTC
-const peerConnection = new RTCPeerConnection(servers);
+const streamingpc = new RTCPeerConnection(servers);
+const multipc: Map<string, RTCPeerConnection> = new Map();
 
 // Streams
 let mediaStream: MediaStream | null = null;
 
 // Socket events
+
+// Listen for create offer
+socket.on(ServerEvent.CREATE_OFFER, async (payload: any) => {
+  console.log("I have to create and send offer", payload);
+  multipc.set(payload.socketId, new RTCPeerConnection(servers));
+  const currentPc = multipc.get(payload.socketId);
+  const offer = await currentPc!.createOffer();
+  await currentPc!.setLocalDescription(offer);
+
+  socket.emit(ClientEvent.SEND_OFFER, {
+    offer,
+    targetSocketId: payload.socketId,
+  });
+  multipc.forEach((pc, key) => {
+    if (key !== payload.socketId) {
+      pc.onicecandidate = (event) => {
+        event.candidate &&
+          socket.emit(ClientEvent.SEND_ICE_CANDIDATE, {
+            candidate: event.candidate,
+            targetSocketId: key,
+          });
+      };
+    }
+  });
+});
+
+// Listen for receive offer
+socket.on(ServerEvent.OFFER, async (offer: RTCSessionDescriptionInit) => {
+  console.log("listening offer", offer);
+  const offerDescription = new RTCSessionDescription(offer);
+  await streamingpc.setRemoteDescription(offerDescription);
+  const answer = await streamingpc.createAnswer();
+  await streamingpc.setLocalDescription(answer);
+  socket.emit(ClientEvent.SEND_ANSWER, {answer, targetSocketId: socket.id});
+});
+
+socket.on(ServerEvent.ANSWER, async (payload: any) => {
+  console.log("listening answer");
+  const { answer, targetSocketId } = payload;
+  if(!multipc.has(targetSocketId)) return;
+  const currentPc = multipc.get(targetSocketId);
+  const answerDescription = new RTCSessionDescription(answer);
+  await currentPc!.setRemoteDescription(answerDescription);
+});
+
 socket.on(ServerEvent.USERS, (payload: any) => {
   const users = payload.length - 1;
   usersCount.textContent = users.toString();
@@ -63,55 +109,21 @@ socket.on(ServerEvent.STREAMS, (payload: string[]) => {
   });
 });
 
-// Listen for answer
-socket.on(ServerEvent.ANSWER, async (answer: RTCSessionDescriptionInit) => {
-  console.log("listening answer", answer);
-  if (!peerConnection.currentRemoteDescription) {
-    const answerDescription = new RTCSessionDescription(answer);
-    peerConnection.setRemoteDescription(answerDescription);
-  }
-});
-
-// Listen for offer
-socket.on(ServerEvent.OFFER, async (offer: RTCSessionDescriptionInit) => {
-  console.log("listening offer", offer);
-  const offerDescription = new RTCSessionDescription(offer);
-  await peerConnection.setRemoteDescription(offerDescription);
-  const answer = await peerConnection.createAnswer();
-  await peerConnection.setLocalDescription(answer);
-  socket.emit(ClientEvent.SEND_ANSWER, answer);
-});
-
 // listen for ice-candidate
 socket.on(ServerEvent.ICE_CANDIDATE, async (payload: any) => {
-  console.log(
-    `listening ice-candidate from ${payload.isOffer ? "offer" : "answer"}`
-  );
+  const areMine = payload.targetSocketId === socket.id;
+  console.log(`areMine: ${areMine} ice-candidates`, payload);
   const candidate = new RTCIceCandidate(payload.candidate);
-  await peerConnection.addIceCandidate(candidate);
+  await streamingpc.addIceCandidate(candidate);
 });
 
 // Buttons actions
-// Create offer
+// Start stream
 startStreamBtn.onclick = async () => {
   const id = uuidv4();
-  socket.emit(ClientEvent.USER_JOIN, id);
+  socket.emit(ClientEvent.JOIN_STREAM, id);
+  socket.emit(ClientEvent.START_STREAM);
   streamIdElement.textContent = `Stream ID: ${id}`;
-
-  // Get candidates for caller, then emit offer
-  peerConnection.onicecandidate = (event) => {
-    event.candidate &&
-      socket.emit(ClientEvent.SEND_ICE_CANDIDATE, {
-        candidate: event.candidate,
-        isOffer: true,
-      });
-  };
-
-  // Create offer
-  const offer = await peerConnection.createOffer();
-  await peerConnection.setLocalDescription(offer);
-  socket.emit(ClientEvent.SEND_OFFER, offer);
-  socket.emit(ClientEvent.NEW_STREAM);
   leaveButton.disabled = false;
 };
 
@@ -121,19 +133,18 @@ joinStreamButton.onclick = async () => {
     "join-stream-input"
   ) as HTMLInputElement;
   const streamId = input.value;
-  socket.emit(ClientEvent.USER_JOIN, streamId);
-  socket.emit(ClientEvent.RECEIVE_OFFER);
+  socket.emit(ClientEvent.JOIN_STREAM, streamId);
 
-  peerConnection.onicecandidate = (event) => {
+  streamingpc.onicecandidate = (event) => {
     event.candidate &&
       socket.emit(ClientEvent.SEND_ICE_CANDIDATE, {
         candidate: event.candidate,
-        isOffer: false,
+        targetSocketId: socket.id,
       });
   };
 
   mediaStream = new MediaStream();
-  peerConnection.ontrack = (event) => {
+  streamingpc.ontrack = (event) => {
     event.streams[0].getTracks().forEach((track) => {
       mediaStream?.addTrack(track);
     });
@@ -160,7 +171,7 @@ startCamButton.onclick = async () => {
       audio: true /*, video: true */,
     });
     mediaStream.getTracks().forEach((track) => {
-      peerConnection.addTrack(track, mediaStream as MediaStream);
+      streamingpc.addTrack(track, mediaStream as MediaStream);
     });
     streamVideo.srcObject = mediaStream;
     startStreamBtn.disabled = false;
@@ -178,5 +189,5 @@ startCamButton.onclick = async () => {
 };
 
 leaveButton.onclick = async () => {
-  socket.emit(ClientEvent.USER_LEAVE);
+  socket.emit(ClientEvent.LEAVE_STREAM);
 };
