@@ -2,6 +2,7 @@ import "./style.css";
 import socket from "./socket";
 import { v4 as uuidv4 } from "uuid";
 import { ClientEvent, ServerEvent } from "./events";
+import { log } from "console";
 
 // HTML elements
 const startCamButton = document.getElementById(
@@ -34,8 +35,7 @@ const servers: RTCConfiguration = {
 };
 
 // webRTC
-const streamingpc = new RTCPeerConnection(servers);
-const multipc: Map<string, RTCPeerConnection> = new Map();
+const peerConnection = new RTCPeerConnection(servers);
 
 // Streams
 let mediaStream: MediaStream | null = null;
@@ -45,45 +45,40 @@ let mediaStream: MediaStream | null = null;
 // Listen for create offer
 socket.on(ServerEvent.CREATE_OFFER, async (payload: any) => {
   console.log("I have to create and send offer", payload);
-  multipc.set(payload.socketId, new RTCPeerConnection(servers));
-  const currentPc = multipc.get(payload.socketId);
-  const offer = await currentPc!.createOffer();
-  await currentPc!.setLocalDescription(offer);
-
+  const { targetSocketId } = payload;
+  const offer = await peerConnection.createOffer();
+  await peerConnection.setLocalDescription(offer);
   socket.emit(ClientEvent.SEND_OFFER, {
     offer,
-    targetSocketId: payload.socketId,
+    targetSocketId,
   });
-  multipc.forEach((pc, key) => {
-    if (key !== payload.socketId) {
-      pc.onicecandidate = (event) => {
-        event.candidate &&
-          socket.emit(ClientEvent.SEND_ICE_CANDIDATE, {
-            candidate: event.candidate,
-            targetSocketId: key,
-          });
-      };
-    }
-  });
+  // Get candidates for caller, then emit offer
+  peerConnection.onicecandidate = (event) => {
+    event.candidate &&
+      socket.emit(ClientEvent.SEND_ICE_CANDIDATE, {
+        candidate: event.candidate,
+        targetSocketId,
+      });
+  };
 });
 
 // Listen for receive offer
 socket.on(ServerEvent.OFFER, async (offer: RTCSessionDescriptionInit) => {
   console.log("listening offer", offer);
   const offerDescription = new RTCSessionDescription(offer);
-  await streamingpc.setRemoteDescription(offerDescription);
-  const answer = await streamingpc.createAnswer();
-  await streamingpc.setLocalDescription(answer);
-  socket.emit(ClientEvent.SEND_ANSWER, {answer, targetSocketId: socket.id});
+  await peerConnection.setRemoteDescription(offerDescription);
+  const answer = await peerConnection.createAnswer();
+  await peerConnection.setLocalDescription(answer);
+  socket.emit(ClientEvent.SEND_ANSWER, { answer, targetSocketId: socket.id });
 });
 
 socket.on(ServerEvent.ANSWER, async (payload: any) => {
   console.log("listening answer");
   const { answer, targetSocketId } = payload;
-  if(!multipc.has(targetSocketId)) return;
-  const currentPc = multipc.get(targetSocketId);
-  const answerDescription = new RTCSessionDescription(answer);
-  await currentPc!.setRemoteDescription(answerDescription);
+  if (!peerConnection.currentRemoteDescription) {
+    const answerDescription = new RTCSessionDescription(answer);
+    peerConnection.setRemoteDescription(answerDescription);
+  }
 });
 
 socket.on(ServerEvent.USERS, (payload: any) => {
@@ -112,9 +107,9 @@ socket.on(ServerEvent.STREAMS, (payload: string[]) => {
 // listen for ice-candidate
 socket.on(ServerEvent.ICE_CANDIDATE, async (payload: any) => {
   const areMine = payload.targetSocketId === socket.id;
-  console.log(`areMine: ${areMine} ice-candidates`, payload);
+  console.log(`${areMine ? "areMine" : "notMy"} ice-candidates`, payload);
   const candidate = new RTCIceCandidate(payload.candidate);
-  await streamingpc.addIceCandidate(candidate);
+  await peerConnection.addIceCandidate(candidate);
 });
 
 // Buttons actions
@@ -135,7 +130,7 @@ joinStreamButton.onclick = async () => {
   const streamId = input.value;
   socket.emit(ClientEvent.JOIN_STREAM, streamId);
 
-  streamingpc.onicecandidate = (event) => {
+  peerConnection.onicecandidate = (event) => {
     event.candidate &&
       socket.emit(ClientEvent.SEND_ICE_CANDIDATE, {
         candidate: event.candidate,
@@ -144,7 +139,7 @@ joinStreamButton.onclick = async () => {
   };
 
   mediaStream = new MediaStream();
-  streamingpc.ontrack = (event) => {
+  peerConnection.ontrack = (event) => {
     event.streams[0].getTracks().forEach((track) => {
       mediaStream?.addTrack(track);
     });
@@ -171,7 +166,7 @@ startCamButton.onclick = async () => {
       audio: true /*, video: true */,
     });
     mediaStream.getTracks().forEach((track) => {
-      streamingpc.addTrack(track, mediaStream as MediaStream);
+      peerConnection.addTrack(track, mediaStream as MediaStream);
     });
     streamVideo.srcObject = mediaStream;
     startStreamBtn.disabled = false;
