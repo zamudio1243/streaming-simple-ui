@@ -35,7 +35,7 @@ const servers: RTCConfiguration = {
 
 // webRTC
 const answerPC = new RTCPeerConnection(servers);
-const offerPC = new RTCPeerConnection(servers);
+const offerPCMap = new Map<string, RTCPeerConnection>();
 
 // Streams
 let mediaStream: MediaStream | null = null;
@@ -46,13 +46,17 @@ let mediaStream: MediaStream | null = null;
 socket.on(ServerEvent.CREATE_OFFER, async (payload: any) => {
   console.log("I have to create and send offer", payload);
   const { targetSocketId } = payload;
+
+  // Verificar si ya existe una conexión RTCPeerConnection para el targetSocketId
+  const offerPC = offerPCMap.get(targetSocketId);
+  if (!offerPC) return;
+
   const offer = await offerPC.createOffer();
   await offerPC.setLocalDescription(offer);
   socket.emit(ClientEvent.SEND_OFFER, {
     offer,
     targetSocketId,
   });
-  // Get candidates for caller, then ice - candidate
   offerPC.onicecandidate = (event) => {
     event.candidate &&
       socket.emit(ClientEvent.SEND_ICE_CANDIDATE, {
@@ -60,6 +64,10 @@ socket.on(ServerEvent.CREATE_OFFER, async (payload: any) => {
         targetSocketId,
       });
   };
+  if (!mediaStream) return;
+  mediaStream.getTracks().forEach((track) => {
+    offerPC.addTrack(track, mediaStream as MediaStream);
+  });
 });
 
 // Listen for receive offer
@@ -75,10 +83,13 @@ socket.on(ServerEvent.OFFER, async (offer: RTCSessionDescriptionInit) => {
 // Listen for receive answer
 socket.on(ServerEvent.ANSWER, async (payload: any) => {
   console.log("listening answer");
-  const { answer } = payload;
-  if (!offerPC.currentRemoteDescription) {
-    const answerDescription = new RTCSessionDescription(answer);
-    offerPC.setRemoteDescription(answerDescription);
+  const { answer, targetSocketId } = payload;
+  const offerPC = offerPCMap.get(targetSocketId);
+  if (offerPC) {
+    if (!offerPC.currentRemoteDescription) {
+      const answerDescription = new RTCSessionDescription(answer);
+      offerPC.setRemoteDescription(answerDescription);
+    }
   }
 });
 
@@ -116,7 +127,10 @@ socket.on(ServerEvent.ICE_CANDIDATE, async (payload: any) => {
   if (areFromOffer) {
     answerPC.addIceCandidate(candidate);
   } else {
-    offerPC.addIceCandidate(candidate);
+    const offerPC = offerPCMap.get(payload.targetSocketId);
+    if (offerPC) {
+      offerPC.addIceCandidate(candidate);
+    }
   }
 });
 
@@ -174,9 +188,7 @@ startCamButton.onclick = async () => {
     mediaStream = await navigator.mediaDevices.getUserMedia({
       audio: true /*, video: true */,
     });
-    mediaStream.getTracks().forEach((track) => {
-      offerPC.addTrack(track, mediaStream as MediaStream);
-    });
+
     streamVideo.srcObject = mediaStream;
     startStreamBtn.disabled = false;
     startCamButton.disabled = true;
