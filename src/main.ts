@@ -52,7 +52,7 @@ socket.on(ServerEvent.CREATE_OFFER, async (payload: any) => {
     offer,
     targetSocketId,
   });
-  // Get candidates for caller, then emit offer
+  // Get candidates for caller, then ice - candidate
   peerConnection.onicecandidate = (event) => {
     event.candidate &&
       socket.emit(ClientEvent.SEND_ICE_CANDIDATE, {
@@ -106,8 +106,11 @@ socket.on(ServerEvent.STREAMS, (payload: string[]) => {
 
 // listen for ice-candidate
 socket.on(ServerEvent.ICE_CANDIDATE, async (payload: any) => {
-  const areMine = payload.targetSocketId === socket.id;
-  console.log(`${areMine ? "areMine" : "notMy"} ice-candidates`, payload);
+  const areFromOffer = payload.targetSocketId === socket.id;
+  console.log(
+    `${areFromOffer ? "offer send me" : "user send me his"} ice-candidates`,
+    payload
+  );
   const candidate = new RTCIceCandidate(payload.candidate);
   await peerConnection.addIceCandidate(candidate);
 });
