@@ -44,7 +44,7 @@ let mediaStream: MediaStream | null = null;
 
 // Listen for create offer
 socket.on(ServerEvent.CREATE_OFFER, async (payload: any) => {
-  console.log("I have to create and send offer", payload);
+  console.log("1. socket ask me create a offer");
   const { targetSocketId } = payload;
   const offer = await offerPC.createOffer();
   await offerPC.setLocalDescription(offer);
@@ -54,6 +54,7 @@ socket.on(ServerEvent.CREATE_OFFER, async (payload: any) => {
   });
   // Get candidates for caller, then ice - candidate
   offerPC.onicecandidate = (event) => {
+    console.log("4. Offer send her ice-candidates", event);
     event.candidate &&
       socket.emit(ClientEvent.SEND_ICE_CANDIDATE, {
         candidate: event.candidate,
@@ -64,7 +65,7 @@ socket.on(ServerEvent.CREATE_OFFER, async (payload: any) => {
 
 // Listen for receive offer
 socket.on(ServerEvent.OFFER, async (offer: RTCSessionDescriptionInit) => {
-  console.log("listening offer", offer);
+  console.log("2. I receive the offer I requested, seding answer");
   const offerDescription = new RTCSessionDescription(offer);
   await answerPC.setRemoteDescription(offerDescription);
   const answer = await answerPC.createAnswer();
@@ -74,7 +75,7 @@ socket.on(ServerEvent.OFFER, async (offer: RTCSessionDescriptionInit) => {
 
 // Listen for receive answer
 socket.on(ServerEvent.ANSWER, async (payload: any) => {
-  console.log("listening answer");
+  console.log("3. socket send me the answer");
   const { answer } = payload;
   if (!offerPC.currentRemoteDescription) {
     const answerDescription = new RTCSessionDescription(answer);
@@ -109,8 +110,11 @@ socket.on(ServerEvent.STREAMS, (payload: string[]) => {
 socket.on(ServerEvent.ICE_CANDIDATE, async (payload: any) => {
   const areFromOffer = payload.targetSocketId === socket.id;
   console.log(
-    `${areFromOffer ? "offer send me" : "user send me his"} ice-candidates`,
-    payload
+    `5. ${
+      areFromOffer
+        ? "socket set ice-candidate from offer"
+        : "offer set ice-candidates from socket"
+    }`
   );
   const candidate = new RTCIceCandidate(payload.candidate);
   if (areFromOffer) {
@@ -139,6 +143,7 @@ joinStreamButton.onclick = async () => {
   socket.emit(ClientEvent.JOIN_STREAM, streamId);
 
   answerPC.onicecandidate = (event) => {
+    console.log("4. Answer send her ice-candidates", event);
     event.candidate &&
       socket.emit(ClientEvent.SEND_ICE_CANDIDATE, {
         candidate: event.candidate,
