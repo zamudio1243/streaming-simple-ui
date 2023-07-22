@@ -44,6 +44,11 @@ let mediaStream: MediaStream | null = null;
 
 // Listen for create offer
 socket.on(ServerEvent.CREATE_OFFER, async (payload: any) => {
+  if (mediaStream) {
+    mediaStream.getTracks().forEach((track) => {
+      offerPC.addTrack(track, mediaStream as MediaStream);
+    });
+  }
   console.log("1. socket ask me create a offer");
   const { targetSocketId } = payload;
   const offer = await offerPC.createOffer();
@@ -71,6 +76,17 @@ socket.on(ServerEvent.OFFER, async (offer: RTCSessionDescriptionInit) => {
   const answer = await answerPC.createAnswer();
   await answerPC.setLocalDescription(answer);
   socket.emit(ClientEvent.SEND_ANSWER, { answer, targetSocketId: socket.id });
+  answerPC.onicecandidate = (event) => {
+    console.log("4. Answer send her ice-candidates", event);
+    event.candidate &&
+      socket.emit(ClientEvent.SEND_ICE_CANDIDATE, {
+        candidate: event.candidate,
+        targetSocketId: socket.id,
+      });
+  };
+  answerPC.onconnectionstatechange = (event) => {
+    console.log("answer connection state change", event);
+  };
 });
 
 // Listen for receive answer
@@ -142,15 +158,6 @@ joinStreamButton.onclick = async () => {
   const streamId = input.value;
   socket.emit(ClientEvent.JOIN_STREAM, streamId);
 
-  answerPC.onicecandidate = (event) => {
-    console.log("4. Answer send her ice-candidates", event);
-    event.candidate &&
-      socket.emit(ClientEvent.SEND_ICE_CANDIDATE, {
-        candidate: event.candidate,
-        targetSocketId: socket.id,
-      });
-  };
-
   mediaStream = new MediaStream();
 
   answerPC.ontrack = (event) => {
@@ -179,9 +186,7 @@ startCamButton.onclick = async () => {
     mediaStream = await navigator.mediaDevices.getUserMedia({
       audio: true /*, video: true */,
     });
-    mediaStream.getTracks().forEach((track) => {
-      offerPC.addTrack(track, mediaStream as MediaStream);
-    });
+
     streamVideo.srcObject = mediaStream;
     startStreamBtn.disabled = false;
     startCamButton.disabled = true;
