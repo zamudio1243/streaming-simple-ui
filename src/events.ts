@@ -16,4 +16,5 @@ export enum ServerEvent {
   ICE_CANDIDATE = "ice-candidate",
   STREAMS = "streams",
   MESSAGE = "message",
+  STREAM_CLOSED = "stream-closed",
 }
