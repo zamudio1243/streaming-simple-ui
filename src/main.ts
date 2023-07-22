@@ -44,12 +44,11 @@ let mediaStream: MediaStream | null = null;
 
 // Listen for create offer
 socket.on(ServerEvent.CREATE_OFFER, async (payload: any) => {
-  console.log("I have to create and send offer", payload);
+  console.log("1. socket ask me create a offer");
   const { targetSocketId } = payload;
 
-  // Verificar si ya existe una conexión RTCPeerConnection para el targetSocketId
-  const offerPC = offerPCMap.get(targetSocketId);
-  if (!offerPC) return;
+  const offerPC = new RTCPeerConnection(servers);
+  offerPCMap.set(targetSocketId, offerPC);
 
   const offer = await offerPC.createOffer();
   await offerPC.setLocalDescription(offer);
@@ -57,32 +56,45 @@ socket.on(ServerEvent.CREATE_OFFER, async (payload: any) => {
     offer,
     targetSocketId,
   });
+  console.log(`hay mediasStream? ${mediaStream ? "simon" : "nel"}`);
+
+  if (mediaStream) {
+    mediaStream.getTracks().forEach((track) => {
+      offerPC.addTrack(track, mediaStream as MediaStream);
+    });
+  }
   offerPC.onicecandidate = (event) => {
+    console.log("4. Offer send her ice-candidates");
     event.candidate &&
       socket.emit(ClientEvent.SEND_ICE_CANDIDATE, {
         candidate: event.candidate,
         targetSocketId,
       });
   };
-  if (!mediaStream) return;
-  mediaStream.getTracks().forEach((track) => {
-    offerPC.addTrack(track, mediaStream as MediaStream);
-  });
+  offerPC.onsignalingstatechange = () => {
+    console.log("signaling state change", offerPC.signalingState);
+  };
+  offerPC.onconnectionstatechange = () => {
+    console.log("connection state change", offerPC.connectionState);
+  };
 });
 
 // Listen for receive offer
 socket.on(ServerEvent.OFFER, async (offer: RTCSessionDescriptionInit) => {
-  console.log("listening offer", offer);
+  console.log("2. I receive the offer I requested, seding answer");
   const offerDescription = new RTCSessionDescription(offer);
   await answerPC.setRemoteDescription(offerDescription);
   const answer = await answerPC.createAnswer();
   await answerPC.setLocalDescription(answer);
   socket.emit(ClientEvent.SEND_ANSWER, { answer, targetSocketId: socket.id });
+  answerPC.onconnectionstatechange = () => {
+    console.log("connection state change", answerPC.connectionState);
+  };
 });
 
 // Listen for receive answer
 socket.on(ServerEvent.ANSWER, async (payload: any) => {
-  console.log("listening answer");
+  console.log("3. socket send me the answer");
   const { answer, targetSocketId } = payload;
   const offerPC = offerPCMap.get(targetSocketId);
   if (offerPC) {
@@ -120,8 +132,11 @@ socket.on(ServerEvent.STREAMS, (payload: string[]) => {
 socket.on(ServerEvent.ICE_CANDIDATE, async (payload: any) => {
   const areFromOffer = payload.targetSocketId === socket.id;
   console.log(
-    `${areFromOffer ? "offer send me" : "user send me his"} ice-candidates`,
-    payload
+    `5. ${
+      areFromOffer
+        ? "socket set ice-candidate from offer"
+        : "offer set ice-candidates from socket"
+    }`
   );
   const candidate = new RTCIceCandidate(payload.candidate);
   if (areFromOffer) {
@@ -153,6 +168,7 @@ joinStreamButton.onclick = async () => {
   socket.emit(ClientEvent.JOIN_STREAM, streamId);
 
   answerPC.onicecandidate = (event) => {
+    console.log("4. Answer send her ice-candidates");
     event.candidate &&
       socket.emit(ClientEvent.SEND_ICE_CANDIDATE, {
         candidate: event.candidate,
