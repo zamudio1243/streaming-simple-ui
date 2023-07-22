@@ -160,6 +160,7 @@ startStreamBtn.onclick = async () => {
   socket.emit(ClientEvent.START_STREAM);
   streamIdElement.textContent = `Stream ID: ${id}`;
   leaveButton.disabled = false;
+  messageButton.disabled = false;
 };
 
 // Join stream
